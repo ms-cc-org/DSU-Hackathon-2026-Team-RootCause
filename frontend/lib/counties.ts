@@ -1,5 +1,6 @@
 export type CropSummary = {
   crop: string;
+  yield_history: { year: number; yield_per_acre: number }[];
   reported_years: number;
   latest_year: number | null;
   latest_yield: number | null;

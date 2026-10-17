@@ -131,6 +131,14 @@ def main():
                         "mean_precip_mm": rounded_mean(crop_rows["precip_mm"]),
                         "mean_tavg_c": rounded_mean(crop_rows["tavg_c"]),
                         "mean_dsci": rounded_mean(crop_rows["mean_dsci"]),
+                        "yield_history": [
+                            {
+                                "year": int(row.year),
+                                "yield_per_acre": round(float(row.yield_per_acre), 1),
+                            }
+                            for row in reported.itertuples()
+                            if pd.notna(row.yield_per_acre)
+                        ],
                     }
                 )
 

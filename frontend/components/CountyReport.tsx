@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import CountyMap, { countyFillColor, countyMetric, MapMetric, MetricLegend } from "@/components/CountyMap";
+import CropYieldChart from "@/components/CropYieldChart";
 import Sidebar from "@/components/Sidebar";
 import type { CountyCollection, CountyFeature } from "@/lib/counties";
 import { formatValue, stateFromSlug } from "@/lib/counties";
@@ -103,6 +104,7 @@ export default function CountyReport({ stateSlug, fips }: { stateSlug: string; f
                 <div className="map-panel-head county-map-head"><div><span className="panel-overline">COUNTY BOUNDARY</span><h2>{county.properties.county_name}</h2><p>County color reflects recent crops and drought conditions.</p></div><div className="map-controls"><label htmlFor="county-map-metric">MAP COLOR</label><select id="county-map-metric" value={metric} onChange={(event) => setMetric(event.target.value as MapMetric)}>{METRICS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>{(metric === "yield_anomaly" || metric === "county_outlook") && <select aria-label="Crop for map color" value={crop} onChange={(event) => setCrop(event.target.value)}>{["CORN", "SOYBEANS", "WHEAT", "SORGHUM"].map((value) => <option key={value}>{value}</option>)}</select>}</div></div>
                 <div className="county-map-canvas"><CountyMap features={[county]} colorScaleFeatures={stateFeatures} metric={metric} crop={crop} prediction={prediction ? { fips: county.properties.fips, risk: prediction.risk } : null} countyOnly /></div>
                 <div className="county-map-foot"><div className="single-map-note"><span className="single-map-swatch" style={{ background: prediction ? prediction.risk === "Low" ? "#347ba0" : prediction.risk === "Medium" ? "#df9a46" : "#c74743" : selectedCropMapHasData ? countyFillColor(county, metric, crop, stateFeatures) : "#edf0ec" }} /> {prediction ? `Live model: ${prediction.risk} risk` : (metric === "county_outlook" || metric === "yield_anomaly") && !selectedCropMapHasData ? `No recent ${crop.toLowerCase()} yield data · hatched` : metric === "mean_dsci" ? `Recent county drought: ${formatValue(county.properties.recent_dsci, 1)} DSCI` : metric === "aws_100cm_mm" ? `Soil capacity: ${formatValue(county.properties.aws_100cm_mm, 1, " mm")}` : metric === "yield_anomaly" ? `${crop} yield anomaly: ${formatValue(cropData?.recent_yield_anomaly_pct, 1, "%")}` : `${crop} county signal · 2021–2025`}</div><div className="county-key-corner"><MetricLegend features={stateFeatures} metric={metric} crop={crop} prediction={prediction ? { fips: county.properties.fips, risk: prediction.risk } : null} /></div></div>
+                <CropYieldChart summaries={county.properties.crop_summaries} />
               </section>
 
               <aside className="panel report-data-panel">

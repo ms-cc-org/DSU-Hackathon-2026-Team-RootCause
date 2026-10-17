@@ -179,6 +179,10 @@ From the repo root, with the venv active, run `jupyter lab` and open `notebooks/
 
 No install? Open the starter notebook in Google Colab and run its first cell, which fetches the data. Colab doesn't save to your team's repository: to keep your work, download it (**File → Download → Download .ipynb**) and add it to your team's repository on GitHub (**Add file → Upload files**).
 
+### Optional Next.js prediction frontend
+
+The standalone `frontend/` app provides a client-side evaporation and drought outlook dashboard for a FastAPI prediction endpoint. It is separate from the included Streamlit app and needs a running API that accepts the documented feature payload. See [frontend/README.md](frontend/README.md) for setup and endpoint configuration.
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ms-cc-org/DSU-Hackathon/blob/main/notebooks/starter_notebook.ipynb)
 
 ---
