@@ -13,8 +13,9 @@ const METRICS: { value: MapMetric; label: string }[] = [
   { value: "aws_100cm_mm", label: "Soil water capacity" },
   { value: "yield_anomaly", label: "Yield anomaly" },
 ];
-const API_URL = process.env.NEXT_PUBLIC_PREDICTION_API_URL ?? "";
-const INITIAL = { max_temp: "32.5", min_temp: "20.0", precip_anomaly: "-12.4", aws_100cm_mm: "150", NDVI: "0.45" };
+const API_URL = process.env.NEXT_PUBLIC_PREDICTION_API_URL || "http://localhost:8000/predict-yield";
+type ModelInputs = { precip_mm: string; precip_anomaly_pct: string; tavg_c: string; extreme_heat_days: string; gdd: string; mean_dsci: string; aws_100cm_mm: string; droughty_pct: string };
+const INITIAL: ModelInputs = { precip_mm: "400", precip_anomaly_pct: "0", tavg_c: "20", extreme_heat_days: "5", gdd: "1200", mean_dsci: "100", aws_100cm_mm: "150", droughty_pct: "50" };
 
 export default function CountyReport({ stateSlug, fips }: { stateSlug: string; fips: string }) {
   const state = stateFromSlug(stateSlug)!;
@@ -23,8 +24,8 @@ export default function CountyReport({ stateSlug, fips }: { stateSlug: string; f
   const [crop, setCrop] = useState("CORN");
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const [form, setForm] = useState(INITIAL);
-  const [prediction, setPrediction] = useState<{ demand: number; risk: "Low" | "Medium" | "High" } | null>(null);
+  const [form, setForm] = useState<ModelInputs>(INITIAL);
+  const [prediction, setPrediction] = useState<{ yieldPerAcre: number; risk: "Low" | "Medium" | "High" } | null>(null);
   const [predicting, setPredicting] = useState(false);
   const [predictionError, setPredictionError] = useState("");
 
@@ -45,14 +46,28 @@ export default function CountyReport({ stateSlug, fips }: { stateSlug: string; f
   const hasCropYield = (cropData?.reported_years ?? 0) > 0;
   const selectedCropMapHasData = county ? countyMetric(county, metric, crop) != null : false;
 
+  useEffect(() => {
+    if (!county) return;
+    setForm({
+      precip_mm: String(climateData?.mean_precip_mm ?? cropData?.mean_precip_mm ?? INITIAL.precip_mm),
+      precip_anomaly_pct: String(county.properties.mean_precip_anomaly_pct ?? 0),
+      tavg_c: String(climateData?.mean_tavg_c ?? cropData?.mean_tavg_c ?? INITIAL.tavg_c),
+      extreme_heat_days: String(county.properties.mean_extreme_heat_days ?? INITIAL.extreme_heat_days),
+      gdd: INITIAL.gdd,
+      mean_dsci: String(cropData?.mean_dsci ?? county.properties.recent_dsci ?? INITIAL.mean_dsci),
+      aws_100cm_mm: String(county.properties.aws_100cm_mm ?? INITIAL.aws_100cm_mm),
+      droughty_pct: String(county.properties.droughty_pct ?? INITIAL.droughty_pct),
+    });
+    setPrediction(null);
+  }, [county, crop, climateData, cropData]);
+
   async function submitPrediction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPredictionError(""); setPrediction(null);
-    if (!API_URL) { setPredictionError("Set NEXT_PUBLIC_PREDICTION_API_URL in frontend/.env.local to connect the live predictor."); return; }
     if (!county) return;
     setPredicting(true);
     try {
-      const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ county_name: county.properties.county_name, max_temp: Number(form.max_temp), min_temp: Number(form.min_temp), precip_anomaly: Number(form.precip_anomaly), aws_100cm_mm: Number(form.aws_100cm_mm), NDVI: Number(form.NDVI) }) });
+      const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ county_name: county.properties.county_name, crop, ...Object.fromEntries(Object.entries(form).map(([key, value]) => [key, Number(value)])) }) });
       const payload: unknown = await response.json().catch(() => null);
       if (!response.ok) {
         const detail = typeof payload === "object" && payload !== null && "detail" in payload ? String((payload as { detail: unknown }).detail) : `Prediction service returned ${response.status}.`;
@@ -60,11 +75,17 @@ export default function CountyReport({ stateSlug, fips }: { stateSlug: string; f
       }
       if (typeof payload !== "object" || payload === null) throw new Error("The prediction API returned an invalid response.");
       const body = payload as Record<string, unknown>;
-      const demand = Number(body.predicted_evaporation_demand);
+      const yieldPerAcre = Number(body.predicted_yield_per_acre);
       const risk = String(body.risk_category);
-      if (!Number.isFinite(demand) || !["Low", "Medium", "High"].includes(risk)) throw new Error("The API response must include a numeric predicted_evaporation_demand and a Low, Medium, or High risk_category.");
-      setPrediction({ demand, risk: risk as "Low" | "Medium" | "High" });
-    } catch (caught) { setPredictionError(caught instanceof Error ? caught.message : "Prediction request failed."); }
+      if (!Number.isFinite(yieldPerAcre) || !["Low", "Medium", "High"].includes(risk)) throw new Error("The API response must include a numeric predicted_yield_per_acre and a Low, Medium, or High risk_category.");
+      setPrediction({ yieldPerAcre, risk: risk as "Low" | "Medium" | "High" });
+    } catch (caught) {
+      setPredictionError(
+        caught instanceof TypeError
+          ? `Could not reach the model API at ${API_URL}. From the repository root, start it with: .venv/bin/python -m uvicorn model_api.api:app --port 8000`
+          : caught instanceof Error ? caught.message : "Prediction request failed.",
+      );
+    }
     finally { setPredicting(false); }
   }
 
@@ -110,20 +131,23 @@ export default function CountyReport({ stateSlug, fips }: { stateSlug: string; f
                 </div>}
                 <div className="report-footnote">County averages describe the county as a whole and may not represent individual fields. Missing values are not treated as zero.</div>
                 <div className="county-predictor">
-                  <div className="aside-panel-heading predictor-heading"><div><span className="panel-overline">PREDICTION TOOL</span><h3>Evaporation outlook</h3></div><span className="small-step">INPUTS</span></div>
-                  <p className="predictor-intro">Adjust conditions for {county.properties.county_name} and send them to the live model.</p>
+                  <div className="aside-panel-heading predictor-heading"><div><span className="panel-overline">PREDICTION TOOL</span><h3>{crop} yield outlook</h3></div><span className="small-step">INPUTS</span></div>
+                  <p className="predictor-intro">Adjust {crop.toLowerCase()} growing conditions for {county.properties.county_name}. The model estimates yield in bushels per acre and compares it with historical {crop.toLowerCase()} yields.</p>
                   <form onSubmit={submitPrediction} className="predictor-form">
                     <div className="predictor-grid">
-                      <PredictionField label="Max temperature" unit="°C" value={form.max_temp} onChange={(value) => { setForm({ ...form, max_temp: value }); setPrediction(null); }} step="0.1" />
-                      <PredictionField label="Min temperature" unit="°C" value={form.min_temp} onChange={(value) => { setForm({ ...form, min_temp: value }); setPrediction(null); }} step="0.1" />
-                      <PredictionField label="Precipitation anomaly" unit="mm" value={form.precip_anomaly} onChange={(value) => { setForm({ ...form, precip_anomaly: value }); setPrediction(null); }} step="0.1" />
-                      <PredictionField label="Water capacity" unit="mm" value={form.aws_100cm_mm} onChange={(value) => { setForm({ ...form, aws_100cm_mm: value }); setPrediction(null); }} step="0.1" />
-                      <PredictionField label="Vegetation index" unit="NDVI" value={form.NDVI} onChange={(value) => { setForm({ ...form, NDVI: value }); setPrediction(null); }} step="0.01" min="0" max="1" />
+                      <PredictionField label="Growing-season precipitation" unit="mm" value={form.precip_mm} onChange={(value) => { setForm({ ...form, precip_mm: value }); setPrediction(null); }} step="1" min="0" />
+                      <PredictionField label="Precipitation anomaly" unit="%" value={form.precip_anomaly_pct} onChange={(value) => { setForm({ ...form, precip_anomaly_pct: value }); setPrediction(null); }} step="0.1" />
+                      <PredictionField label="Mean temperature" unit="°C" value={form.tavg_c} onChange={(value) => { setForm({ ...form, tavg_c: value }); setPrediction(null); }} step="0.1" />
+                      <PredictionField label="Extreme heat days" unit="days" value={form.extreme_heat_days} onChange={(value) => { setForm({ ...form, extreme_heat_days: value }); setPrediction(null); }} step="1" min="0" max="366" />
+                      <PredictionField label="Growing degree days" unit="GDD" value={form.gdd} onChange={(value) => { setForm({ ...form, gdd: value }); setPrediction(null); }} step="10" min="0" />
+                      <PredictionField label="Mean drought index" unit="DSCI" value={form.mean_dsci} onChange={(value) => { setForm({ ...form, mean_dsci: value }); setPrediction(null); }} step="1" min="0" max="500" />
+                      <PredictionField label="Soil water capacity" unit="mm" value={form.aws_100cm_mm} onChange={(value) => { setForm({ ...form, aws_100cm_mm: value }); setPrediction(null); }} step="1" min="0" />
+                      <PredictionField label="Drought-vulnerable soil" unit="%" value={form.droughty_pct} onChange={(value) => { setForm({ ...form, droughty_pct: value }); setPrediction(null); }} step="0.1" min="0" max="100" />
                     </div>
                     <button className="submit-button" type="submit" disabled={predicting}>{predicting ? <><span className="spinner" /> Calculating…</> : <>Generate outlook <Arrow /></>}</button>
                   </form>
                   {predictionError && <div className="error-message" role="alert">{predictionError}</div>}
-                  {prediction && <div className={`prediction-result risk-${prediction.risk.toLowerCase()}`}><span>{county.properties.county_name}</span><strong>{prediction.demand.toFixed(2)} · {prediction.risk} risk</strong></div>}
+                  {prediction && <div className={`prediction-result risk-${prediction.risk.toLowerCase()}`}><span>{county.properties.county_name}</span><strong>{prediction.yieldPerAcre.toFixed(2)} bu/ac · {prediction.risk} relative yield risk</strong></div>}
                 </div>
               </aside>
             </div>

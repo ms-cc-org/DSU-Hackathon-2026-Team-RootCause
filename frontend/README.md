@@ -1,29 +1,46 @@
 # Fieldwise Next.js frontend
 
-This is a standalone Next.js App Router frontend for the evaporation and drought prediction prompt. It sends `county_name`, `max_temp`, `min_temp`, `precip_anomaly`, `aws_100cm_mm`, and `NDVI` to a FastAPI endpoint and expects `predicted_evaporation_demand` plus a `risk_category` of `Low`, `Medium`, or `High` in the JSON response.
+This App Router frontend shows state-level county maps and county reports. The county-page prediction form uses the crop-aware XGBoost model trained from `data/master_dataset.csv`; it sends growing-season weather, drought, and soil inputs to a FastAPI service and receives predicted yield in bushels per acre plus a crop-relative risk label.
 
-The state rail links Nebraska, Iowa, California, and Delaware. Each state view draws clickable county boundaries from `public/county-data.json`; the default map shows 2021–2025 drought intensity from the weekly U.S. Drought Monitor data, which is available across the county boundaries. You can also color by a crop outlook (60% recent yield-anomaly risk plus 40% drought pressure), recent yield anomaly, or soil water capacity. Crop-based shading requires at least 3 valid yield-anomaly reports in 2021–2025; counties below that coverage threshold are hatched as no data. County rankings follow the selected map measure. The legend is below the map.
+The county data and map interactions work without starting the model service. The API is needed only for the live prediction form.
 
-County report pages show growing-season, soil, MODIS, and yield summaries from the repository's county dataset. Recent crop-season precipitation and temperature summaries are computed from the daily weather panel for all boundary counties, and soil values are joined directly from the county soil table. When the selected county has no reported yield for a crop, the page explains the gap and surfaces available climate and soil metrics rather than presenting empty crop cards. The county data asset includes all 253 boundary counties, with recent drought data from the weekly drought panel and crop records from the master dataset. Iowa uses the dataset's `IA` state code.
+## Run the model and frontend locally
 
-To refresh the static map asset after rebuilding the source datasets, run `python frontend/scripts/build_county_data.py` from the repository root. The crop and drought blend is an exploratory county signal, not a validated forecast; only the county report page can receive a model forecast overlay from the live API.
+Requires Python 3.10–3.13 and Node.js 20.9+. On macOS, XGBoost also needs Apple's OpenMP runtime:
 
-## Run locally
+```bash
+brew install libomp
+```
 
-Requires Node.js 20.9 or newer.
+In terminal 1, from the repository root, create a Python environment, install model dependencies, train the model once, and start the API:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r model_api/requirements.txt
+python -m model_api.train_model
+python -m uvicorn model_api.api:app --reload --port 8000
+```
+
+The trainer reads `data/master_dataset.csv` and writes the ignored artifact to `model_api/artifacts/yield_model.joblib`. It prints holdout RMSE and R². The API listens at `http://localhost:8000` and accepts `POST /predict-yield`.
+
+In terminal 2:
 
 ```bash
 cd frontend
 npm install
 cp .env.example .env.local
-```
-
-Set `NEXT_PUBLIC_PREDICTION_API_URL` in `.env.local` to the current public `/predict-evaporation` URL for the FastAPI service, then run:
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Restart the dev server after changing `.env.local`. The browser calls the endpoint directly, so the API must allow the frontend origin through CORS. Do not put private credentials in a `NEXT_PUBLIC_` variable; Next.js exposes it to the browser.
+Open [http://localhost:3000](http://localhost:3000), open a county, and use **Prediction tool**. The form defaults to that county's available crop, weather, and soil summaries; GDD is editable because it is not currently included in the county summary data. Restart `npm run dev` after changing `.env.local`.
 
-The live API is not included in this repository. When it is unavailable, the dashboard shows a setup or connection error instead of fabricating a prediction. Its request payload and expected response follow the supplied frontend specification.
+## Run the notebook in Google Colab
+
+Push the updated project to GitHub first so the `model_api/` files are available to Colab. Then open `notebooks/eva.ipynb` in Colab (upload it or open the repository copy) and run its setup cell. It clones this repo into the Colab runtime, installs `model_api/requirements.txt`, and trains the same model. To call that Colab-hosted API from your local frontend, add an `NGROK_AUTHTOKEN` secret in Colab's Secrets panel, enable notebook access to it, and run the API cell. Copy its printed `/predict-yield` URL into `frontend/.env.local`, then restart Next.js. The URL lasts only for the active Colab runtime. The notebook does not store the token.
+
+## Model notes
+
+The notebook's original prototype trained on rows from multiple crops without giving the model a crop feature, so it mixed crop yield scales. The shared trainer uses crop as a one-hot categorical feature, evaluates a held-out split, then fits the saved inference model on all complete records. Low/Medium/High relative yield risk is based on each crop's training-set 25th and 75th yield percentiles. This is a baseline predictive estimate, not a causal estimate of conservation-practice effects.
+
+Refresh the static county map data separately with `python frontend/scripts/build_county_data.py` after rebuilding source datasets.
