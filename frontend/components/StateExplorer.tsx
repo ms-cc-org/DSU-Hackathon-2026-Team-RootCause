@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CountyMap, { countyMetric, MapMetric, MetricLegend } from "@/components/CountyMap";
+import Disclaimer from "@/components/Disclaimer";
+import Select from "@/components/Select";
 import Sidebar from "@/components/Sidebar";
 import type { CountyCollection, CountyFeature } from "@/lib/counties";
 import { formatValue, STATES } from "@/lib/counties";
@@ -63,9 +65,11 @@ export default function StateExplorer({ stateCode }: { stateCode: string }) {
         <div className="explorer-content">
           <div className="explorer-heading"><div><div className="eyebrow"><span className="eyebrow-line" /> AGRICULTURAL CLIMATE INTELLIGENCE</div><h1>{state.name} county outlook</h1><p>Compare county crop and drought conditions. Select a county on the map or ranking to open its report.</p></div><div className="state-heading-chip"><span className="state-monogram">{state.code}</span><span><strong>{state.name}</strong><small>{features.length} counties mapped · {dataCountyCount} with crop data</small></span></div></div>
 
+          <Disclaimer />
+
           <div className="explorer-grid state-map-grid">
             <section className="panel map-panel">
-              <div className="map-panel-head"><div><span className="panel-overline">COUNTY OUTLOOK MAP</span><h2>{state.name}</h2><p>{mapDescription}</p></div><div className="map-controls"><label htmlFor="map-metric">COLOR COUNTIES BY</label><select id="map-metric" value={metric} onChange={(event) => setMetric(event.target.value as MapMetric)}>{metricOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select>{(metric === "yield_anomaly" || metric === "county_outlook") && <select aria-label="Crop for county map" value={crop} onChange={(event) => setCrop(event.target.value)}>{CROPS.map((value) => <option key={value}>{value}</option>)}</select>}</div></div>
+              <div className="map-panel-head"><div><span className="panel-overline">COUNTY OUTLOOK MAP</span><h2>{state.name}</h2><p>{mapDescription}</p></div><div className="map-controls"><label htmlFor="map-metric">COLOR COUNTIES BY</label><Select id="map-metric" value={metric} onChange={(value) => setMetric(value as MapMetric)} options={metricOptions} />{(metric === "yield_anomaly" || metric === "county_outlook") && <Select ariaLabel="Crop for county map" value={crop} onChange={setCrop} options={CROPS.map((value) => ({ value, label: value }))} />}</div></div>
               <div className="map-canvas">{loadingData ? <div className="map-loading"><span className="spinner dark-spinner" /> Loading county boundaries…</div> : features.length ? <CountyMap features={features} metric={metric} crop={crop} onSelect={(feature) => router.push(`/states/${state.slug}/counties/${feature.properties.fips}`)} /> : <div className="map-loading">{error || `No county boundary records for ${state.name}.`}</div>}</div>
               <div className="map-panel-foot"><span><i className="map-foot-dot" /> Interactive county boundaries</span>{!loadingData && features.length > 0 && <div className="map-key-corner"><MetricLegend features={features} metric={metric} crop={crop} /></div>}<span>Source: U.S. Census county boundaries</span></div>
             </section>
