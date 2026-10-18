@@ -1,6 +1,7 @@
-# Data to Harvest: AI for Agricultural Resilience Hackathon
+# Fieldwise: End-to-End Agricultural Resilience
 
-**October 17–18, 2026 | Delaware State University | 24 hours**
+**Spring Planting & Summer Drought Intelligence Across CA, DE, IA, and NE**
+**Amari Majette, Brianna Snell, Habibah Kashmiri, Hafsah Kashmiri, Ebonee Kent**
 
 Droughts, heat waves and unusual weather make farming harder to plan. Many people make decisions about this every season: crop insurers, extension agents, state drought programs, grain buyers. Your team picks one of them, uses 26 years of real county farm data to help them make one decision, and builds a tool that shows it.
 
