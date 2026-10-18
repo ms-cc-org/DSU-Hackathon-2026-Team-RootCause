@@ -94,7 +94,6 @@ This geographic scope allows users to explore agricultural and weather condition
 
 ### Development Tools
 
-- **OpenAI Codex** — AI-assisted coding and development.
 - **Visual Studio Code (VS Code)** — Code editor used for project development.
 
 ## Data Sources
