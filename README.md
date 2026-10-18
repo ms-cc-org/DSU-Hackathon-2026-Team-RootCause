@@ -1,9 +1,146 @@
-# Fieldwise: End-to-End Agricultural Resilience
+# 🌱 FieldWise: End-to-End Agricultural Resilience
 
-**Spring Planting & Summer Drought Intelligence Across CA, DE, IA, and NE**
-**Amari Majette, Brianna Snell, Habibah Kashmiri, Hafsah Kashmiri, Ebonee Kent**
+### Spring Planting & Summer Drought Intelligence Across California, Delaware, Iowa, and Nebraska
 
-Droughts, heat waves and unusual weather make farming harder to plan. Many people make decisions about this every season: crop insurers, extension agents, state drought programs, grain buyers. Your team picks one of them, uses 26 years of real county farm data to help them make one decision, and builds a tool that shows it.
+## 📖 Overview
+
+FieldWise is an interactive agricultural decision-support platform designed to help agricultural professionals explore historical weather, drought, soil, and crop data. By making agricultural data easier to access, compare, and understand, FieldWise supports informed decisions about county-level drought vulnerability, spring planting dates, and evaporation rates.
+
+The platform focuses on three key areas: summer drought analysis, spring frost-risk assessment, and AI-powered evaporation-rate prediction.
+
+## ❗ Problem Statement
+
+Agricultural risks vary by location and season. Differences in rainfall, temperature, soil conditions, and frost exposure can affect crop production, making it difficult for agricultural professionals to identify risks and make informed decisions.
+
+Historical agricultural and weather data can help professionals better understand these challenges, but accessing and comparing information across locations can be difficult. FieldWise aims to make this information more accessible through an interactive platform.
+
+## 💡 Our Solution
+
+FieldWise provides an interactive platform for exploring historical agricultural and weather data through two main features, supported by AI-powered evaporation prediction.
+
+### 🗺️ County Explorer
+
+The County Explorer helps users compare agricultural conditions across counties by exploring:
+
+- Drought conditions and vulnerability.
+- Soil characteristics.
+- Crop-yield trends.
+
+These comparisons can help agricultural and conservation officers identify areas that may require additional assessment, attention, or conservation support.
+
+### 🌡️ Spring Frost Calendar
+
+The Spring Frost Calendar uses historical temperature data to help identify planting dates with lower historical frost risk.
+
+This feature is designed to help extension agronomists provide farmers with more informed planting guidance based on historical temperature patterns.
+
+### 🤖 AI-Powered Evaporation Prediction
+
+FieldWise incorporates AI-based evaporation-rate prediction to estimate evaporation rates using the data provided through the hackathon.
+
+This feature aims to provide additional insight into environmental conditions that may affect agricultural water availability. Evaporation predictions complement the platform's weather and drought analysis to support a better understanding of agricultural conditions.
+
+## 🎯 Target Users
+
+### Primary Users: Agricultural and Conservation Officers
+
+Professionals who need to compare county-level drought vulnerability to help prioritize further assessment and conservation planning.
+
+**Primary need:** Understand how drought conditions, soil characteristics, and crop-yield trends vary across counties.
+
+### Secondary Users: Extension Agronomists
+
+Professionals who help farmers evaluate planting dates and understand seasonal frost risks.
+
+**Primary need:** Identify planting dates with lower historical frost risk to provide farmers with more informed planting guidance.
+
+## 👤 User Stories
+
+### Summer Drought
+
+As an agricultural or conservation officer, I want to compare drought conditions, soil characteristics, and crop-yield trends across counties so I can identify areas that may need additional attention or conservation support.
+
+### Spring Frost
+
+As an extension agronomist, I want to identify planting dates with lower historical frost risk so I can provide farmers with more informed planting guidance.
+
+## 🔍 Main Research Question
+
+**How can historical agricultural and weather data help professionals understand county-level drought risks and make more informed planting decisions?**
+
+This question guides the development of FieldWise and its agricultural analysis and prediction features.
+
+## 🎯 Project Objective
+
+The objective of FieldWise is to make agricultural data more accessible and understandable so agricultural professionals can better evaluate seasonal risks and make informed decisions about drought vulnerability, conservation planning, spring planting dates, and evaporation rates.
+
+## 🗺️ Geographic Coverage
+
+FieldWise focuses on four U.S. states:
+
+- **California (CA)**
+- **Delaware (DE)**
+- **Iowa (IA)**
+- **Nebraska (NE)**
+
+This geographic scope allows users to explore agricultural and weather conditions across different regions.
+
+## 🛠️ Technology Stack
+
+### Programming Languages and Frameworks
+
+- **Next.js** — Framework used to build the web application and interactive user interface.
+- **Python** — Used for data processing, analysis, and evaporation-rate prediction.
+
+### Development Tools
+
+- **OpenAI Codex** — AI-assisted coding and development.
+- **Visual Studio Code (VS Code)** — Code editor used for project development.
+
+## 📊 Data Sources
+
+FieldWise uses datasets provided by the hackathon organizers to support its agricultural analysis and prediction features.
+
+The provided data supports:
+
+- **Drought Analysis:** Exploring drought conditions, soil characteristics, and crop-yield trends across counties.
+- **Spring Frost Analysis:** Using historical temperature data to explore frost risk and potential planting dates.
+- **Evaporation Prediction:** Supporting AI-based evaporation-rate estimates.
+
+Specific dataset names, file formats, and original sources can be documented once confirmed from the hackathon materials.
+
+## 🚀 Key Features
+
+| Feature | Description |
+|---|---|
+| County Explorer | Compare drought conditions, soil characteristics, and crop-yield trends across counties. |
+| Spring Frost Calendar | Explore historical temperature data to identify planting dates with lower frost risk. |
+| AI Evaporation Prediction | Estimate evaporation rates using the provided data. |
+| Historical Data Exploration | Make agricultural and weather information easier to access and interpret. |
+| County-Level Comparison | Help identify areas that may need further drought assessment or conservation planning. |
+
+## 👥 Project Team
+
+This project was developed collaboratively by:
+
+- Amari Majette
+- Brianna Snell
+- Habibah Kashmiri
+- Hafsah Kashmiri
+- Ebonee Kent
+
+## 📌 Project Status
+
+FieldWise brings together agricultural data exploration, seasonal frost-risk assessment, and AI-powered evaporation prediction to support agricultural resilience.
+
+Additional documentation about installation, usage, model implementation, and evaluation can be added as the project develops.
+
+---
+
+*FieldWise — Making agricultural data more accessible for informed planting decisions and agricultural resilience.*
+
+User: Extension Agronomist and Conservation Officer
+problem statement: 
 
 ---
 
@@ -13,8 +150,6 @@ Droughts, heat waves and unusual weather make farming harder to plan. Many peopl
 2. **Find the evidence.** Use the data to answer the question behind that decision. Test your answer on years you didn't use to build it.
 3. **Build a tool for your user.** It shows them the evidence and what to decide. It can be a **Streamlit app** (a starter app is included), a **Jupyter notebook** (a starter notebook is included), or another **Python app**. Your user should be able to use it without reading your code.
 4. **Present it.** About 5 minutes of pitch and live demo, then 3 minutes of judges' questions. Explain who your user is, what they decide, what evidence you used, and how you know it works.
-
-By checkpoint 2 (Saturday evening), your data should load and a first version should run. Your GitHub repository should include your code and short instructions to run it. Judges reward a tool that clearly helps its user, not technical complexity for its own sake.
 
 ### Minimum deliverable
 
@@ -252,56 +387,6 @@ If you want a question to explore before choosing a user:
 6. Once you control for soil quality (`nccpi_crop`), how much of the yield gap is left for drought to explain?
 
 ---
-
-## Repo layout
-
-```
-app.py                          Streamlit app — run with: streamlit run app.py
-LICENSE                         MIT license for the code and docs (data credits in README)
-requirements.txt                pinned dependencies (app, notebook, modelling)
-
-data/
-├── master_dataset.csv          the dataset (2.3 MB)
-├── master_dataset.parquet      same data, smaller and faster (412 KB)
-├── data_dictionary.md          every field, every warning, every known gap
-├── counties.geojson            county boundaries for maps (253 counties)
-└── processed/                  source parquets (for advanced teams)
-    ├── acis/                   daily county weather, 1999–2025
-    ├── drought/                weekly drought severity, 2000–2025
-    ├── irrigation/             irrigated share and yields, mostly Nebraska (extension)
-    ├── modis/                  annual NDVI/EVI per county (extension)
-    ├── nass/                   crop yield and acreage
-    └── soil/                   county soil properties (static)
-
-src/
-├── data_loader.py              load_master(), load_nass_raw(), load_daily_weather(), etc.
-└── build/                      pipelines that built the dataset (reference only)
-    └── validate_sources.py     sanity checks across all 4 sources
-
-notebooks/
-└── starter_notebook.ipynb      load the data, worked example, places to start
-
-docs/
-├── Data to Harvest Hackathon at Delaware State University.md   event concept, judging rubric
-├── dataset_specification.md    technical build contract — fields, filters, formulas
-├── technical_implementation_plan.md   scope, state/crop rationale, pipeline
-└── timeline.md                 organizer prep timeline
-
-.github/ISSUE_TEMPLATE/
-└── submission.yml              the submission form (see Team setup and submission)
-```
-
-## Data sources
-
-| Source | What it provides | Access |
-|---|---|---|
-| [USDA NASS Quick Stats](https://quickstats.nass.usda.gov/api) | Crop yield and acreage, irrigated split | API key (free) |
-| [NOAA ACIS GridData](https://docs.rcc-acis.org/acisws/) | Daily precipitation, temperature | No key |
-| [U.S. Drought Monitor](https://droughtmonitor.unl.edu/) | Weekly drought severity (D0–D4) | No key |
-| [USDA NRCS Soil Data Access](https://sdmdataaccess.nrcs.usda.gov/) | Soil water capacity, productivity | No key |
-| [NASA MODIS MOD13Q1 v061](https://lpdaac.usgs.gov/products/mod13q1v061/) | Satellite vegetation indices (NDVI, EVI) | GEE (free) |
-
-All sources are public federal data. The master dataset and all processed files are included in the repo — no API calls needed to start working.
 
 ### Credits
 
