@@ -6,12 +6,10 @@ export default function FrostChart({
   data,
   county,
   plantDay,
-  other,
 }: {
   data: FrostData;
   county: FrostCounty;
   plantDay: number;
-  other?: { county: FrostCounty; plantDay: number }; // a second county to compare (optional)
 }) {
   const width = 720;
   const height = 280;
@@ -23,10 +21,8 @@ export default function FrostChart({
   const plotHeight = height - top - bottom;
 
   // Work out the top and bottom of the chart
-  let allDays = county.lastFrost.filter((day) => day > 0).concat([plantDay]);
-  if (other) {
-    allDays = allDays.concat(other.county.lastFrost.filter((day) => day > 0)).concat([other.plantDay]);
-  }
+  const frostDays = county.lastFrost.filter((day) => day > 0);
+  const allDays = frostDays.concat([plantDay]);
   const minDay = Math.min(...allDays) - 5;
   const maxDay = Math.max(...allDays) + 5;
   const firstYear = data.years[0];
@@ -64,22 +60,6 @@ export default function FrostChart({
       {/* the planting date */}
       <line x1={left} x2={width - right} y1={yFor(plantDay)} y2={yFor(plantDay)} stroke="#2c5e43" strokeWidth="2" strokeDasharray="6 5" />
       <text x={left + 6} y={yFor(plantDay) - 7} fontSize="14" fontWeight="700" fill="#2c5e43">Planting date {dayToText(plantDay)}</text>
-
-      {/* the second county, if there is one: blue rings and a blue dashed line */}
-      {other && (
-        <g>
-          <line x1={left} x2={width - right} y1={yFor(other.plantDay)} y2={yFor(other.plantDay)} stroke="#347ba0" strokeWidth="2" strokeDasharray="2 5" />
-          {data.years.map((year, index) => {
-            const lastFrost = other.county.lastFrost[index];
-            if (lastFrost < 0) return null;
-            return (
-              <circle key={year} cx={xFor(year)} cy={yFor(lastFrost)} r="5" fill="#ffffff" stroke="#347ba0" strokeWidth="2.5">
-                <title>{other.county.name + " " + year + ": last frost " + dayToText(lastFrost)}</title>
-              </circle>
-            );
-          })}
-        </g>
-      )}
 
       {/* one dot per year */}
       {data.years.map((year, index) => {

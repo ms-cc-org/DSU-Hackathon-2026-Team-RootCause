@@ -222,13 +222,18 @@ body{font-size:16px}
 .frost-crop span{font-size:14px;color:#587062}
 .frost-crop:hover{border-color:#4f8a63}
 .frost-crop.is-selected{background:#e8f1e6;border-color:#2c5e43;box-shadow:0 0 0 2px #2c5e43 inset}
-.frost-reset.is-on{background:#2c5e43;color:#fff}
-.frost-compare{margin-bottom:16px}
-.frost-compare-pick{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0 16px}
-.frost-compare-pick>span{font-size:15px;color:#587062}
-.frost-compare-table th,.frost-compare-table td{text-align:left}
-.frost-compare-table tbody th{font-weight:600;color:#2c3e33}
-.frost-buttons{display:flex;flex-direction:column;gap:8px}.frost-buttons .frost-reset{width:100%}
-.frost-compare h2{margin:6px 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#223a2d}
-.frost-compare-pick .fw-select{width:240px}
-.frost-compare-table{margin-top:4px}
+
+/* Compare counties on the county page */
+.cmp-panel{padding:20px 24px;margin-top:16px}
+.cmp-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cmp-head h2{margin:4px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#223a2d}
+.cmp-pick{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:16px 0}
+.cmp-pick>span{font-size:15px;color:#587062}
+.cmp-pick .fw-select{width:230px}
+.cmp-summary{margin:0 0 14px;font-size:16px;line-height:1.5;color:#2c3e33}
+.cmp-table th,.cmp-table td{text-align:left}
+.cmp-table tbody th{font-weight:600;color:#2c3e33;font-size:15px;text-transform:none;letter-spacing:0}
+.cmp-table td.cmp-better{background:#e8f1e6;font-weight:700;color:#2c5e43}
+.cmp-subhead{margin:22px 0 6px;font-size:17px;color:#223a2d}
+.cmp-chart{width:100%;max-width:760px;display:block}
+.cmp-note{margin:14px 0 0;padding:10px 14px;border-radius:10px;background:#fff7e6;color:#6b5322;font-size:14px;line-height:1.5}

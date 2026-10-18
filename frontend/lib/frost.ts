@@ -63,11 +63,6 @@ export function countiesForCrop(data: FrostData, crop: Crop): FrostCounty[] {
   }));
 }
 
-// How many years (out of every year since 2000) had a frost after this planting day
-export function yearsHit(county: FrostCounty, day: number): number {
-  return county.lastFrost.filter((last) => last > day).length;
-}
-
 // Years used to build the planting date, and years used to test it
 export const BUILD_START = 2000;
 export const BUILD_END = 2018;

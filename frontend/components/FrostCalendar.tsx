@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import CountyMap from "@/components/CountyMap";
 import Disclaimer from "@/components/Disclaimer";
 import FrostChart from "@/components/FrostChart";
-import FrostCompare from "@/components/FrostCompare";
 import Select from "@/components/Select";
 import Sidebar from "@/components/Sidebar";
 import type { CountyCollection, CountyFeature } from "@/lib/counties";
@@ -33,9 +32,6 @@ export default function FrostCalendar() {
   const [cropId, setCropId] = useState("soybeans");
   const [percentile, setPercentile] = useState(75);
   const [margin, setMargin] = useState(10);
-  const [compare, setCompare] = useState(false);
-  const [stateCodeB, setStateCodeB] = useState("NE");
-  const [fipsB, setFipsB] = useState("");
 
   // Load the frost numbers and the county shapes when the page opens
   useEffect(() => {
@@ -51,7 +47,6 @@ export default function FrostCalendar() {
         setPercentile(frostData.defaults[firstCrop.coldLimit].percentile);
         setMargin(frostData.defaults[firstCrop.coldLimit].margin);
         setFips(countiesInState(list, "IA")[0].fips);
-        setFipsB(countiesInState(list, "NE")[0].fips);
       })
       .catch(() => {
         setError("The frost data could not be loaded. Run frontend/scripts/build_frost_data.py to create it.");
@@ -64,11 +59,6 @@ export default function FrostCalendar() {
   function changeState(code: string) {
     setStateCode(code);
     if (frost) setFips(countiesInState(countiesForCrop(frost, crop), code)[0].fips);
-  }
-
-  function changeStateB(code: string) {
-    setStateCodeB(code);
-    if (frost) setFipsB(countiesInState(countiesForCrop(frost, crop), code)[0].fips);
   }
 
   // Each crop has its own recommended settings, so switching crops loads them
@@ -103,11 +93,6 @@ export default function FrostCalendar() {
   const result = getPlanting(frost, county, percentile, margin);
   const group = summarize(frost, stateCounties, percentile, margin);
 
-  // The second county, only used when "compare" is on
-  const stateCountiesB = countiesInState(cropCounties, stateCodeB);
-  const countyB = stateCountiesB.find((item) => item.fips === fipsB) ?? stateCountiesB[0];
-  const resultB = getPlanting(frost, countyB, percentile, margin);
-
   // Planting date for a county on the map (null = frost does not set the date)
   function mapValue(feature: CountyFeature) {
     const item = cropCounties.find((c) => c.fips === feature.properties.fips);
@@ -125,11 +110,6 @@ export default function FrostCalendar() {
   }).reverse();
   const hitYears = historyRows.filter((row) => row.daysAfter !== null && row.daysAfter > 0).length;
 
-  // Rows for the trade-off table
-  const marginChoices = [0, 3, 7, 10, 14, 21];
-  if (!marginChoices.includes(margin)) marginChoices.push(margin);
-  marginChoices.sort((a, b) => a - b);
-  const tradeoffRows = marginChoices.map((value) => ({ margin: value, summary: summarize(frost, stateCounties, percentile, value) }));
 
   return (
     <main className="explorer-shell">
@@ -189,12 +169,7 @@ export default function FrostCalendar() {
               <input id="frost-margin" type="range" min={0} max={21} step={1} value={margin} onChange={(event) => setMargin(Number(event.target.value))} />
               <small>More days is safer but plants later.</small>
             </div>
-            <div className="frost-buttons">
-              <button type="button" className="frost-reset" onClick={resetSettings}>Reset to recommended</button>
-              <button type="button" className={compare ? "frost-reset is-on" : "frost-reset"} onClick={() => setCompare(!compare)}>
-                {compare ? "Stop comparing" : "Compare two counties"}
-              </button>
-            </div>
+            <button type="button" className="frost-reset" onClick={resetSettings}>Reset to recommended</button>
           </section>
 
           {/* The date for one county, and the state map */}
@@ -296,22 +271,8 @@ export default function FrostCalendar() {
             <span className="panel-overline">YEAR BY YEAR · {county.name.toUpperCase()}</span>
             <h2>Last spring frost vs. the planting date</h2>
             <p className="frost-fine tight">Each dot is the last day that year with a low at or below {crop.coldText}. A dot above the dashed line in the test years (green box) means a frost came after planting. Years with no frost are not shown.</p>
-            <FrostChart data={frost} county={county} plantDay={result.day} other={compare ? { county: countyB, plantDay: resultB.day } : undefined} />
+            <FrostChart data={frost} county={county} plantDay={result.day} />
           </section>
-
-          {compare && (
-            <FrostCompare
-              data={frost}
-              countyA={county}
-              countyB={countyB}
-              stateB={stateCodeB}
-              countiesB={stateCountiesB}
-              percentile={percentile}
-              margin={margin}
-              onStateB={changeStateB}
-              onCountyB={setFipsB}
-            />
-          )}
 
           {/* Every past year for this county */}
           <section className="panel frost-card frost-history-card">
@@ -344,8 +305,8 @@ export default function FrostCalendar() {
             </div>
           </section>
 
-          {/* How the date held up for the whole state, and the trade-off */}
-          <div className="frost-two">
+          {/* How the date held up for the whole state */}
+          <div>
             <section className="panel frost-card">
               <span className="panel-overline">DID IT WORK? · {stateName.toUpperCase()}</span>
               <div className="frost-stat-row">
@@ -372,28 +333,6 @@ export default function FrostCalendar() {
                 ))}
               </div>
               <p className="frost-fine">Share of counties hit each year. The dashed line marks the 10% goal.</p>
-            </section>
-
-            <section className="panel frost-card">
-              <span className="panel-overline">THE TRADE-OFF · {stateName.toUpperCase()}</span>
-              <p className="frost-fine tight">Each extra day of caution cuts frost risk but plants later. This uses your “past years” setting of {percentile}%.</p>
-              <table className="frost-table">
-                <thead>
-                  <tr><th>Extra days</th><th>Average date</th><th>Frost after planting</th></tr>
-                </thead>
-                <tbody>
-                  {tradeoffRows.map((row) => (
-                    <tr key={row.margin} className={row.margin === margin ? "current" : ""}>
-                      <td>+{row.margin}{row.margin === margin ? " (yours)" : ""}</td>
-                      <td>{dayToText(row.summary.averageDay)}</td>
-                      <td>
-                        <span className="frost-mini"><i style={{ width: Math.min(100, row.summary.frostRate * 300) + "%" }} className={row.summary.frostRate > GOAL ? "over" : ""} /></span>
-                        {(row.summary.frostRate * 100).toFixed(1)}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </section>
           </div>
 
