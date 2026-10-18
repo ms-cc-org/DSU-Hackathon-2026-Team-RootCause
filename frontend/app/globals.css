@@ -137,7 +137,7 @@ body{font-size:16px}
 .frost-reset{height:42px;padding:0 16px;border:1px solid #cfdccb;border-radius:10px;background:#f4f8f2;color:#2f5a42;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
 .frost-reset:hover{background:#e9f1e6}
 .frost-grid{grid-template-columns:minmax(300px,.8fr) minmax(0,1.2fr)!important;margin-bottom:16px}
-.frost-result{padding:22px 24px 24px}
+.frost-result{padding:22px 24px 24px;align-self:start}
 .frost-result h2{margin:6px 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#223a2d}
 .frost-bigdate{font-family:Georgia,'Times New Roman',serif;font-size:58px;line-height:1.05;color:#2c5e43;margin:8px 0 8px;letter-spacing:-.01em}
 .frost-bigdate.small{font-size:30px}
@@ -147,12 +147,7 @@ body{font-size:16px}
 .frost-pill{display:inline-block;padding:6px 12px;border-radius:999px;font-size:14px;font-weight:700}
 .pill-good{background:#e0f0e3;color:#2a6a3d}
 .pill-warn{background:#fbe8d3;color:#9a5a1c}
-.frost-years{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
-.frost-year{padding:9px 11px;border-radius:10px;border:1px solid #dbe5d8;background:#f7faf6;display:flex;flex-direction:column;gap:2px;font-size:13px;color:#587062}
-.frost-year strong{font-size:16px;color:#2c4034}
-.frost-year em{font-style:normal;font-weight:700;color:#2a6a3d}
-.frost-year.hit{background:#fdf0ea;border-color:#efc9b9}
-.frost-year.hit em{color:#a1342b}
+.frost-verdict-head small{font-size:13px;color:#6f8075}
 .frost-fine{font-size:14px;line-height:1.45;color:#5f7367;margin:12px 0 0}
 .frost-fine.tight{margin:6px 0 12px}
 .frost-map .map-canvas{height:380px!important;max-height:380px}
@@ -162,16 +157,6 @@ body{font-size:16px}
 .frost-legend .legend-swatches span{flex:1}
 .frost-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .frost-card{padding:20px 22px 22px;overflow:visible}
-.frost-stat-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:8px 0 4px}
-.frost-stat strong{display:block;font-family:Georgia,'Times New Roman',serif;font-size:42px;color:#2c5e43;line-height:1}
-.frost-stat span{display:block;margin-top:6px;font-size:14px;color:#5f7367;max-width:300px;line-height:1.35}
-.frost-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:14px}
-.frost-bar-col{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;color:#4c6354}
-.frost-bar-col small{font-size:13px;color:#6f8075}
-.frost-bar-track{position:relative;width:100%;height:100px;background:#f2f6f0;border-radius:8px;display:flex;align-items:flex-end;overflow:hidden}
-.frost-bar-track i{display:block;width:100%;background:#7fae8c;border-radius:6px 6px 0 0}
-.frost-bar-track i.over{background:#d98467}
-.frost-bar-track b{position:absolute;left:0;right:0;height:0;border-top:2px dashed #3d5f49}
 .frost-table{width:100%;border-collapse:collapse;font-size:15px}
 .frost-table th{text-align:left;padding:8px 8px;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:#6d8074;border-bottom:1px solid #e1e8de}
 .frost-table td{padding:10px 8px;border-bottom:1px solid #eef2ec;color:#34493c;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -195,12 +180,6 @@ body{font-size:16px}
 .frost-chart-card{margin-bottom:16px}
 .frost-chart-card h2{margin:6px 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#223a2d}
 .frost-chart{display:block;width:100%;max-width:820px;height:auto;margin-top:6px}
-.frost-history-card{margin-bottom:16px}
-.frost-history-card h2{margin:6px 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#223a2d}
-.frost-history-scroll{max-height:440px;overflow-y:auto;border:1px solid #e1e8de;border-radius:10px}
-.frost-history th{position:sticky;top:0;background:#f7faf6}
-.frost-history td{white-space:normal}
-.frost-history tr.hit td{background:#fdf0ea;color:#8c3a2c}
 .disclaimer{margin:0 0 16px;padding:12px 16px;border:1px solid #e8dcb0;border-left:4px solid #d1ae45;border-radius:10px;background:#fdf8e6;color:#5c4c14;font-size:15px;line-height:1.45}
 .disclaimer strong{color:#4a3c0a}
 .predictor-heading+.disclaimer,.county-predictor .disclaimer{margin:10px 0 12px;font-size:14px}

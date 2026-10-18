@@ -168,9 +168,9 @@ export default function CountyReport({ stateSlug, fips }: { stateSlug: string; f
             </div>
           ) : <div className="report-error">No county record matches FIPS {fips} in {state.name}.</div>}
 
-          {county && <CountyCompare key={county.properties.fips} county={county} features={allFeatures} crop={crop} />}
 
           {county && <section className="panel crop-history-panel"><div className="crop-history-title"><div><span className="panel-overline">CROP RECORDS</span><h2>Available yield coverage</h2></div><span className="history-period">2000—2025</span></div><div className="crop-table-wrap"><table className="crop-table"><thead><tr><th>Crop</th><th>Reported years</th><th>Mean yield</th><th>Latest yield</th><th>Latest year</th></tr></thead><tbody>{county.properties.crop_summaries.map((summary) => <CropRow key={summary.crop} summary={summary} active={summary.crop === crop} onClick={() => setCrop(summary.crop)} />)}</tbody></table></div></section>}
+          {county && <CountyCompare key={county.properties.fips} county={county} features={allFeatures} crop={crop} />}
           <footer className="explorer-footer"><span>FIELDWISE <i>·</i> AGRICULTURAL RESILIENCE TOOLS</span><span>Source: county boundary file, master dataset, and MODIS county summaries.</span></footer>
         </div>
       </section>

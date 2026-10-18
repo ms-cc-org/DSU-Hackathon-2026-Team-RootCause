@@ -15,15 +15,10 @@ function cropOf(county: CountyFeature, crop: string) {
 const ROWS: Row[] = [
   { label: "Average yield (bu/ac)", better: "higher", suffix: "", digits: 1, get: (c, crop) => cropOf(c, crop)?.mean_yield },
   { label: "Latest yield (bu/ac)", better: "higher", suffix: "", digits: 1, get: (c, crop) => cropOf(c, crop)?.latest_yield },
-  { label: "Latest yield vs. county trend", better: "higher", suffix: "%", digits: 1, get: (c, crop) => cropOf(c, crop)?.latest_yield_anomaly_pct },
-  { label: "Yield vs. trend, 2021–2025", better: "higher", suffix: "%", digits: 1, get: (c, crop) => cropOf(c, crop)?.recent_yield_anomaly_pct },
-  { label: "Average drought score (0–500)", better: "lower", suffix: "", digits: 1, get: (c, crop) => cropOf(c, crop)?.mean_dsci },
-  { label: "Recent drought score, 2021–2025", better: "lower", suffix: "", digits: 1, get: (c) => c.properties.recent_dsci },
-  { label: "Growing-season rain (mm)", better: null, suffix: "", digits: 0, get: (c, crop) => cropOf(c, crop)?.mean_precip_mm },
-  { label: "Growing-season temperature (°C)", better: null, suffix: "", digits: 1, get: (c, crop) => cropOf(c, crop)?.mean_tavg_c },
-  { label: "Soil water capacity (mm)", better: "higher", suffix: "", digits: 0, get: (c) => c.properties.aws_100cm_mm },
-  { label: "Drought-vulnerable soil", better: "lower", suffix: "%", digits: 1, get: (c) => c.properties.droughty_pct },
-  { label: "Vegetation index (NDVI)", better: null, suffix: "", digits: 3, get: (c) => c.properties.ndvi_mean },
+  { label: "Yield vs. normal, 2021–2025", better: "higher", suffix: "%", digits: 1, get: (c, crop) => cropOf(c, crop)?.recent_yield_anomaly_pct },
+  { label: "Drought lately, 2021–2025", better: "lower", suffix: "", digits: 0, get: (c) => c.properties.recent_dsci },
+  { label: "Water the soil can hold (mm)", better: "higher", suffix: "", digits: 0, get: (c) => c.properties.aws_100cm_mm },
+  { label: "Soil that dries out fast", better: "lower", suffix: "%", digits: 0, get: (c) => c.properties.droughty_pct },
 ];
 
 function show(value: number | null | undefined, row: Row) {
@@ -174,13 +169,15 @@ export default function CountyCompare({ county, features, crop }: { county: Coun
               })}
             </tbody>
           </table>
-          <p className="frost-fine">Green means the better value for a crop. Rain, temperature and the vegetation index are not marked because a higher number is not clearly better.</p>
+          <p className="frost-fine">Green marks the better number. Normal means the county's own yield trend since 2000. The drought score runs from 0 to 500, and lower is better.</p>
 
-          <h3 className="cmp-subhead">Yield each year</h3>
+          <h3 className="cmp-subhead">Yield each year (bu/ac)</h3>
           <YieldCompareChart a={county} b={other} crop={crop} />
-          <p className="frost-fine">Green dots are {nameA}. Blue rings are {nameB}. Lines only join years that are next to each other, so gaps mean no reported yield.</p>
+          <p className="frost-fine">Green dots are {nameA}. Blue rings are {nameB}. A gap means no yield was reported that year.</p>
 
-          <p className="cmp-note">Be careful comparing across states. Nebraska is about half irrigated and California almost entirely, while Iowa and Delaware are rainfed, so irrigation can explain a gap more than weather or soil does.</p>
+          {stateCode !== county.properties.state_alpha && (
+            <p className="cmp-note">These counties are in different states. Irrigation can explain a yield gap more than weather or soil does, since some states water most of their crops and others rely on rain.</p>
+          )}
         </>
       )}
     </section>

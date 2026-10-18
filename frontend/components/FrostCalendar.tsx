@@ -8,15 +8,9 @@ import Select from "@/components/Select";
 import Sidebar from "@/components/Sidebar";
 import type { CountyCollection, CountyFeature } from "@/lib/counties";
 import { STATES } from "@/lib/counties";
-import { countiesForCrop, CROPS, dayToText, FrostCounty, FrostData, getPlanting, summarize } from "@/lib/frost";
+import { countiesForCrop, CROPS, dayToText, FrostCounty, FrostData, getPlanting } from "@/lib/frost";
 
-const GOAL = 0.1; // we want a frost after planting in no more than 1 of every 10 years
 const MAP_COLORS = ["#347ba0", "#5c9eb7", "#9fc3c1", "#e5d99a", "#df9a69", "#c75b4e"];
-
-// Turn 0.026 into "3%"
-function percentText(value: number) {
-  return Math.round(value * 100) + "%";
-}
 
 // All counties in a state, A to Z
 function countiesInState(list: FrostCounty[], code: string): FrostCounty[] {
@@ -91,7 +85,6 @@ export default function FrostCalendar() {
   const stateFeatures = features.filter((feature) => feature.properties.state_alpha === stateCode);
   const county = stateCounties.find((item) => item.fips === fips) ?? stateCounties[0];
   const result = getPlanting(frost, county, percentile, margin);
-  const group = summarize(frost, stateCounties, percentile, margin);
 
   // Planting date for a county on the map (null = frost does not set the date)
   function mapValue(feature: CountyFeature) {
@@ -101,15 +94,6 @@ export default function FrostCalendar() {
     return planting.frostFree ? null : planting.day;
   }
   const mapDays = stateFeatures.map(mapValue).filter((value): value is number => value !== null);
-
-  // One row for every year, newest first, so a farmer can compare with the planting date
-  const historyRows = frost.years.map((year, index) => {
-    const lastFrost = county.lastFrost[index];
-    const daysAfter = lastFrost < 0 ? null : lastFrost - result.day;
-    return { year: year, lastFrost: lastFrost, daysAfter: daysAfter, isTestYear: year >= 2019 };
-  }).reverse();
-  const hitYears = historyRows.filter((row) => row.daysAfter !== null && row.daysAfter > 0).length;
-
 
   return (
     <main className="explorer-shell">
@@ -180,41 +164,33 @@ export default function FrostCalendar() {
 
               {result.frostFree ? (
                 <>
-                  <div className="frost-bigdate small">No spring frost limit</div>
-                  <p className="frost-lead">In most of 2000–2018 this county never dropped to {crop.coldText} before July, so frost does not set a planting date here. Use other limits such as soil temperature or moisture.</p>
+                  <div className="frost-bigdate small">No frost limit</div>
+                  <p className="frost-lead">Frost almost never comes late in this county, so it does not decide when to plant here. Soil temperature and moisture matter more.</p>
                 </>
               ) : (
                 <>
                   <div className="frost-bigdate">{dayToText(result.day)}</div>
-                  <p className="frost-lead">
-                    From 2000–2018, the last spring frost came between <strong>{dayToText(result.earliestFrost ?? 0)}</strong> and <strong>{dayToText(result.latestFrost ?? 0)}</strong> (usually around {dayToText(result.medianFrost ?? 0)}). This date covers {percentile}% of those years, plus {margin} extra days.
+                  <p className="frost-lead">Plant on or after this date and a late spring frost is unlikely to hurt your crop.</p>
+
+                  <div className="frost-verdict-head">
+                    {result.hits === 0
+                      ? <span className="frost-pill pill-good">Safe in all {result.testYears.length} test years</span>
+                      : <span className="frost-pill pill-warn">Frost hit in {result.hits} of {result.testYears.length} test years</span>}
+                    <small>Test years are 2019–2025.</small>
+                  </div>
+
+                  {result.hits > 0 && (
+                    <p className="frost-fine">That is above our 10% goal. Try adding more safety days above.</p>
+                  )}
+
+                  <p className="frost-fine">
+                    How we picked it: in 2000–2018 the last spring frost came between {dayToText(result.earliestFrost ?? 0)} and {dayToText(result.latestFrost ?? 0)}, usually around {dayToText(result.medianFrost ?? 0)}. This date is later than the last frost in {percentile} of every 100 of those years, plus {margin} extra days.
                   </p>
                 </>
               )}
 
               {!result.frostFree && result.day < 60 && (
-                <p className="frost-fine">This date falls in mid-winter. Frost rarely comes late in this county, so frost is unlikely to be what limits planting here. Soil temperature and moisture matter more.</p>
-              )}
-
-              <div className="frost-verdict-head">
-                <span className="panel-overline">HOW IT HELD UP ON 2019–2025</span>
-                {result.hits === 0
-                  ? <span className="frost-pill pill-good">No frost after this date</span>
-                  : <span className="frost-pill pill-warn">Frost after this date in {result.hits} of {result.testYears.length} years</span>}
-              </div>
-
-              <div className="frost-years">
-                {result.testYears.map((item) => (
-                  <div className={item.hit ? "frost-year hit" : "frost-year ok"} key={item.year}>
-                    <strong>{item.year}</strong>
-                    <span>{item.lastFrost === null ? "No frost" : "Last frost " + dayToText(item.lastFrost)}</span>
-                    <em>{item.hit ? "Frost after planting" : "Safe"}</em>
-                  </div>
-                ))}
-              </div>
-
-              {result.hits > 0 && (
-                <p className="frost-fine">One bad year out of {result.testYears.length} is {percentText(1 / result.testYears.length)}, above the 10% goal. A more cautious setting above can bring it down.</p>
+                <p className="frost-fine">This date is in mid-winter, so frost is not what limits planting here. Soil temperature matters more.</p>
               )}
             </section>
 
@@ -273,68 +249,6 @@ export default function FrostCalendar() {
             <p className="frost-fine tight">Each dot is the last day that year with a low at or below {crop.coldText}. A dot above the dashed line in the test years (green box) means a frost came after planting. Years with no frost are not shown.</p>
             <FrostChart data={frost} county={county} plantDay={result.day} />
           </section>
-
-          {/* Every past year for this county */}
-          <section className="panel frost-card frost-history-card">
-            <span className="panel-overline">PAST YEARS · {county.name.toUpperCase()}</span>
-            <h2>Every year since 2000</h2>
-            <p className="frost-fine tight">
-              Compare each year with the planting date of {result.frostFree ? "this setting" : dayToText(result.day)}. A frost after that date would have hurt a crop planted on it.
-              This date would have been hit in <strong>{hitYears} of {historyRows.length} years</strong>.
-            </p>
-            <div className="frost-history-scroll">
-              <table className="frost-table frost-history">
-                <thead>
-                  <tr><th>Year</th><th>Last spring frost</th><th>Compared with planting date</th><th>Used for</th></tr>
-                </thead>
-                <tbody>
-                  {historyRows.map((row) => (
-                    <tr key={row.year} className={row.daysAfter !== null && row.daysAfter > 0 ? "hit" : ""}>
-                      <td><strong>{row.year}</strong></td>
-                      <td>{row.lastFrost < 0 ? "No frost" : dayToText(row.lastFrost)}</td>
-                      <td>
-                        {row.daysAfter === null && "Safe, no frost this year"}
-                        {row.daysAfter !== null && row.daysAfter > 0 && row.daysAfter + " days after. Frost hit a crop planted on the date"}
-                        {row.daysAfter !== null && row.daysAfter <= 0 && -row.daysAfter + " days before. Safe"}
-                      </td>
-                      <td>{row.isTestYear ? "Test year" : "Built the date"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* How the date held up for the whole state */}
-          <div>
-            <section className="panel frost-card">
-              <span className="panel-overline">DID IT WORK? · {stateName.toUpperCase()}</span>
-              <div className="frost-stat-row">
-                <div className="frost-stat">
-                  <strong>{(group.frostRate * 100).toFixed(1)}%</strong>
-                  <span>of county-years had a frost after the planting date (2019–2025)</span>
-                </div>
-                {group.frostRate <= GOAL
-                  ? <div className="frost-pill pill-good">Meets the 10% goal</div>
-                  : <div className="frost-pill pill-warn">Above the 10% goal</div>}
-              </div>
-              <p className="frost-fine">{group.countiesWithNoHit} of {group.counties} counties had no frost after their date in any of the 7 test years.</p>
-
-              <div className="frost-bars">
-                {group.byYear.map((item) => (
-                  <div className="frost-bar-col" key={item.year}>
-                    <div className="frost-bar-track">
-                      <i style={{ height: Math.min(100, item.rate * 250) + "%" }} className={item.rate > GOAL ? "over" : ""} />
-                      <b style={{ bottom: GOAL * 250 + "%" }} />
-                    </div>
-                    <span>{percentText(item.rate)}</span>
-                    <small>{item.year}</small>
-                  </div>
-                ))}
-              </div>
-              <p className="frost-fine">Share of counties hit each year. The dashed line marks the 10% goal.</p>
-            </section>
-          </div>
 
           <footer className="explorer-footer">
             <span>FIELDWISE <i>·</i> FROST-SAFE PLANTING CALENDAR</span>
