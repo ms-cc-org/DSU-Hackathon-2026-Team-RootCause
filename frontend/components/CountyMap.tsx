@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import type { CountyFeature } from "@/lib/counties";
+import { STATE_NAMES } from "@/lib/counties";
 
 export type MapMetric = "county_outlook" | "mean_dsci" | "aws_100cm_mm" | "yield_anomaly";
 
@@ -106,6 +107,41 @@ export function countyFillColor(feature: CountyFeature, metric: MapMetric, crop:
   return colorFor(countyMetric(feature, metric, crop), Math.min(...values), Math.max(...values), PALETTES[metric]);
 }
 
+// Turn a yield difference (in %) into a short word and a colour tone
+export function conditionFor(anomaly: number): { label: string; tone: "good" | "ok" | "warn" | "bad" } {
+  if (anomaly >= 5) return { label: "Well above normal", tone: "good" };
+  if (anomaly >= 2) return { label: "Above normal", tone: "good" };
+  if (anomaly > -2) return { label: "Near normal", tone: "ok" };
+  if (anomaly > -8) return { label: "Below normal", tone: "warn" };
+  return { label: "Well below normal", tone: "bad" };
+}
+
+// The card that shows when you hover a county: state, county, and how each crop is doing
+export function CropConditionTip({ feature }: { feature: CountyFeature }) {
+  const { county_name, state_alpha, crop_summaries } = feature.properties;
+  const rows = crop_summaries
+    .filter((item) => item.recent_yield_count >= 3 && item.recent_yield_anomaly_pct != null)
+    .sort((a, b) => a.crop.localeCompare(b.crop));
+  return (
+    <>
+      <div className="county-tip-head"><strong>{county_name}</strong><span>{STATE_NAMES[state_alpha] ?? state_alpha}</span></div>
+      {rows.length === 0 && <div className="county-tip-sub">No crop reports for 2021–2025</div>}
+      {rows.length > 0 && <div className="county-tip-sub">Crop condition, 2021–2025 yield vs. county normal</div>}
+      {rows.map((item) => {
+        const anomaly = item.recent_yield_anomaly_pct as number;
+        const condition = conditionFor(anomaly);
+        return (
+          <div className="county-tip-row" key={item.crop}>
+            <span className="county-tip-crop">{item.crop.charAt(0) + item.crop.slice(1).toLowerCase()}</span>
+            <span className="county-tip-pct">{anomaly > 0 ? "+" : ""}{anomaly.toFixed(1)}%</span>
+            <span className={"county-tip-tag tone-" + condition.tone}>{condition.label}</span>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 export default function CountyMap({
   features,
   metric,
@@ -115,6 +151,9 @@ export default function CountyMap({
   countyOnly = false,
   colorScaleFeatures,
   prediction,
+  getValue,
+  paletteOverride,
+  tooltip,
 }: {
   features: CountyFeature[];
   metric: MapMetric;
@@ -124,19 +163,29 @@ export default function CountyMap({
   countyOnly?: boolean;
   colorScaleFeatures?: CountyFeature[];
   prediction?: { fips: string; risk: "Low" | "Medium" | "High" } | null;
+  getValue?: (feature: CountyFeature) => number | null; // use your own number for each county
+  paletteOverride?: string[]; // use your own colours
+  tooltip?: (feature: CountyFeature) => ReactNode; // use your own hover card
 }) {
+  // The county the mouse is over (null when it is not over a county)
+  const [hover, setHover] = useState<{ feature: CountyFeature; x: number; y: number } | null>(null);
+  const valueOf = (feature: CountyFeature) => (getValue ? getValue(feature) : countyMetric(feature, metric, crop));
   const shapes = useMemo(() => projectFeatures(features), [features]);
-  const range = useMemo(() => {
-    const values = (colorScaleFeatures ?? features).map((feature) => countyMetric(feature, metric, crop)).filter((value): value is number => value != null && Number.isFinite(value));
-    return { min: values.length ? Math.min(...values) : 0, max: values.length ? Math.max(...values) : 1 };
-  }, [features, colorScaleFeatures, metric, crop]);
-  const palette = PALETTES[metric];
+  // Lowest and highest value on the map, used to pick colours
+  const values = (colorScaleFeatures ?? features).map(valueOf).filter((value): value is number => value != null && Number.isFinite(value));
+  const range = { min: values.length ? Math.min(...values) : 0, max: values.length ? Math.max(...values) : 1 };
+  const palette = paletteOverride ?? PALETTES[metric];
+
+  // Put the hover card to the right of the mouse, or to the left near the screen edge
+  const tipLeft = hover ? (hover.x > window.innerWidth - 340 ? hover.x - 330 : hover.x + 16) : 0;
+  const tipTop = hover ? (hover.y > window.innerHeight - 220 ? hover.y - 150 : hover.y + 16) : 0;
 
   return (
+    <>
     <svg className={`county-map-svg ${countyOnly ? "county-map-single" : ""}`} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={countyOnly ? "County boundary map" : "Interactive county map. Select a county for its details."}>
       <defs><pattern id="missingPattern" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#edf0ec"/><line x1="0" y1="0" x2="0" y2="6" stroke="#d9dfd8" strokeWidth="1"/></pattern></defs>
       {shapes.map(({ feature, path }) => {
-        const value = countyMetric(feature, metric, crop);
+        const value = valueOf(feature);
         const predictedRisk = prediction?.fips === feature.properties.fips ? prediction.risk : null;
         const predictionFill = predictedRisk === "Low" ? "#347ba0" : predictedRisk === "Medium" ? "#df9a46" : predictedRisk === "High" ? "#c74743" : null;
         const fill = predictionFill ?? colorFor(value, range.min, range.max, palette);
@@ -148,15 +197,23 @@ export default function CountyMap({
             fill={predictedRisk ? fill : value == null ? "url(#missingPattern)" : fill}
             className={`county-shape ${onSelect ? "county-clickable" : ""} ${isSelected ? "county-selected" : ""}`}
             onClick={onSelect ? () => onSelect(feature) : undefined}
+            onMouseEnter={(event) => setHover({ feature, x: event.clientX, y: event.clientY })}
+            onMouseMove={(event) => setHover({ feature, x: event.clientX, y: event.clientY })}
+            onMouseLeave={() => setHover(null)}
+            aria-label={`${feature.properties.county_name}, ${STATE_NAMES[feature.properties.state_alpha] ?? feature.properties.state_alpha}`}
             role={onSelect ? "button" : undefined}
             tabIndex={onSelect ? 0 : undefined}
             onKeyDown={onSelect ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(feature); } } : undefined}
-          >
-            <title>{`${feature.properties.county_name}: ${predictedRisk ? `${predictedRisk} risk · live prediction` : value == null ? "No data" : `${value.toFixed(1)} · ${metricLabel(metric)}`}`}</title>
-          </path>
+          />
         );
       })}
     </svg>
+    {hover && (
+      <div className="county-tip" role="tooltip" style={{ left: tipLeft, top: tipTop }}>
+        {tooltip ? tooltip(hover.feature) : <CropConditionTip feature={hover.feature} />}
+      </div>
+    )}
+    </>
   );
 }
 

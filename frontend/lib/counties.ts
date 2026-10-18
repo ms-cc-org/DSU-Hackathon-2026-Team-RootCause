@@ -64,3 +64,5 @@ export function stateFromSlug(slug: string) {
 export function formatValue(value: number | null | undefined, digits = 1, suffix = "") {
   return value == null || !Number.isFinite(value) ? "—" : `${value.toFixed(digits)}${suffix}`;
 }
+
+export const STATE_NAMES: Record<string, string> = Object.fromEntries(STATES.map((state) => [state.code, state.name]));

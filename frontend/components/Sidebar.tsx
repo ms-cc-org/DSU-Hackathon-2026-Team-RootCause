@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { STATES, stateFromSlug } from "@/lib/counties";
 
-export default function Sidebar({ activeSlug }: { activeSlug?: string }) {
+export default function Sidebar({ activeSlug, activePage }: { activeSlug?: string; activePage?: "frost" }) {
   const activeState = activeSlug ? stateFromSlug(activeSlug)?.code : undefined;
   return (
     <aside className="state-rail" aria-label="State navigation">
@@ -21,6 +21,13 @@ export default function Sidebar({ activeSlug }: { activeSlug?: string }) {
             <span className="state-tab-name">{state.name}</span>
           </Link>
         ))}
+      </nav>
+      <div className="rail-separator"><span>TOOLS</span></div>
+      <nav className="state-nav">
+        <Link className={`state-tab ${activePage === "frost" ? "selected" : ""}`} href="/frost" title="Frost-safe planting calendar" aria-label="Frost-safe planting calendar" aria-current={activePage === "frost" ? "page" : undefined}>
+          <span className="state-code">❄</span>
+          <span className="state-tab-name">Frost</span>
+        </Link>
       </nav>
       <div className="rail-foot"><span className="avatar">RC</span></div>
     </aside>
