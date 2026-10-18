@@ -95,6 +95,7 @@ This geographic scope allows users to explore agricultural and weather condition
 ### Development Tools
 
 - **Visual Studio Code (VS Code)** — Code editor used for project development.
+- **Google Collab** — Code environment for Evaporation AI 
 
 ## Data Sources
 
